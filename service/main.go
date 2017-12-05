@@ -2,21 +2,30 @@ package main
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
+	"time"
 
 	pb "github.com/pieterlouw/grpc-beyond/proto"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
 var listenPort = flag.String("l", ":7100", "Specify the port that the server will listen on")
+
+type releaseInfo struct {
+	ReleaseDate     string `json:"releaseDate"`
+	ReleaseNotesURL string `json:"releaseNotesURL"`
+}
 
 /* goReleaseService implements GoReleaseServiceServer as defined in the generated code:
 // Server API for GoReleaseService service
@@ -27,11 +36,6 @@ type GoReleaseServiceServer interface {
 */
 type goReleaseService struct {
 	releases map[string]releaseInfo
-}
-
-type releaseInfo struct {
-	ReleaseDate     string `json:"releaseDate"`
-	ReleaseNotesURL string `json:"releaseNotesURL"`
 }
 
 func (g *goReleaseService) GetReleaseInfo(ctx context.Context, r *pb.GetReleaseInfoRequest) (*pb.ReleaseInfo, error) {
@@ -96,7 +100,11 @@ func main() {
 		Certificates: []tls.Certificate{cert},
 	})
 
-	server := grpc.NewServer(grpc.Creds(creds))
+	// create new gRPC server with Transport Credentials
+	server := grpc.NewServer(
+		grpc.Creds(creds),
+		grpc.UnaryInterceptor(unaryInterceptor),
+	)
 
 	lis, err := net.Listen("tcp", *listenPort)
 	if err != nil {
@@ -111,38 +119,49 @@ func main() {
 	}
 }
 
-/*
+// general unary interceptor function
 func unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	if err := authorize(ctx); err != nil {
-		return nil, err
+	start := time.Now()
+
+	if info.FullMethod != "/proto.GoReleaseService/ListReleases" { //skip auth when ListReleases requested
+		if err := authorize(ctx); err != nil {
+			return nil, err
+		}
 	}
 
-	return handler(ctx, req)
+	h, err := handler(ctx, req)
+
+	log.Printf("request - Method:%s\tDuration:%s\tError:%v\n", info.FullMethod, time.Since(start), err) //logging
+
+	return h, err
 }
 
-func authorize(ctx context.Context) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			papilioapi.Error(fmt.Sprintf("Unknown error occurred while authenticating caller (%+v)", r))
-			err = grpc.Errorf(codes.Internal, "Unknown error occurred while authenticating caller")
-		}
-	}()
-
-	if md, ok := metadata.FromContext(ctx); ok {
-		elem, ok := md["authorization"]
-
-		if ok {
-			authorization := elem[0][len("Basic "):]
-
-			if _, ok := papilioapi.AppConfig.Auth[authorization]; ok {
-				return nil
-			}
-		} else {
-			return grpc.Errorf(codes.Unauthenticated, "Auth Empty")
-		}
-		return grpc.Errorf(codes.Unauthenticated, "Auth Failed")
-
+// authorize function that is used by the interceptor functions.
+func authorize(ctx context.Context) error {
+	// warning: this is only for illustration purposes - don't implement authorization that is hardcoded!
+	var authList = map[string]bool{
+		base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", "scaramoucheX2", "Can-you-do-the-fandango?"))): true,
 	}
 
-	return grpc.Errorf(codes.Unauthenticated, "Auth Empty")
-}*/
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return status.Errorf(codes.InvalidArgument, "retrieving metadata failed")
+	}
+
+	elem, ok := md["authorization"]
+	if !ok {
+		return status.Errorf(codes.InvalidArgument, "no auth details supplied")
+	}
+
+	authorization := elem[0][len("Basic "):] //extract base64 basic auth value (similar to HTTP Basic Auth)
+	valid, ok := authList[authorization]
+	if !ok {
+		return status.Errorf(codes.NotFound, "auth not found")
+	}
+
+	if !valid {
+		return status.Errorf(codes.Unauthenticated, "auth failed")
+	}
+
+	return nil
+}
