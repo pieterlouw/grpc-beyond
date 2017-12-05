@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package proto;
+
+service GoReleaseService {
+    rpc GetReleaseInfo(GetReleaseInfoRequest) returns (ReleaseInfo) {}
+    rpc ListReleases(ListReleasesRequest) returns (ListReleasesResponse) {}
+}
+
+message GetReleaseInfoRequest {
+    string version = 1;
+}
+
+message ListReleasesRequest {} //empty
+
+message ListReleasesResponse {
+    repeated ReleaseInfo releases = 1;
+}
+
+message ReleaseInfo {
+    string version = 1;
+    string releaseDate = 2;
+    string releaseNotesURL = 3;
+}
