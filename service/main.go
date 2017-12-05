@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"io/ioutil"
@@ -11,26 +12,26 @@ import (
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
 
 var listenPort = flag.String("l", ":7100", "Specify the port that the server will listen on")
 
-/* usersService implements GoReleaseServiceServer as defined in the generated code:
+/* goReleaseService implements GoReleaseServiceServer as defined in the generated code:
 // Server API for GoReleaseService service
 type GoReleaseServiceServer interface {
 	GetReleaseInfo(context.Context, *GetReleaseInfoRequest) (*ReleaseInfo, error)
 	ListReleases(context.Context, *ListReleasesRequest) (*ListReleasesResponse, error)
 }
 */
+type goReleaseService struct {
+	releases map[string]releaseInfo
+}
 
 type releaseInfo struct {
 	ReleaseDate     string `json:"releaseDate"`
 	ReleaseNotesURL string `json:"releaseNotesURL"`
-}
-
-type goReleaseService struct {
-	releases map[string]releaseInfo
 }
 
 func (g *goReleaseService) GetReleaseInfo(ctx context.Context, r *pb.GetReleaseInfoRequest) (*pb.ReleaseInfo, error) {
@@ -82,12 +83,26 @@ func main() {
 		log.Fatalf("failed to marshal release data: %v", err)
 	}
 
+	// prepare TLS Config
+	tlsCert := "../certs/demo.crt"
+	tlsKey := "../certs/demo.key"
+	cert, err := tls.LoadX509KeyPair(tlsCert, tlsKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create gRPC TLS credentials
+	creds := credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{cert},
+	})
+
+	server := grpc.NewServer(grpc.Creds(creds))
+
 	lis, err := net.Listen("tcp", *listenPort)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	log.Println("Listening on ", *listenPort)
-	server := grpc.NewServer()
 
 	pb.RegisterGoReleaseServiceServer(server, svc)
 
@@ -95,3 +110,39 @@ func main() {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
+
+/*
+func unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	if err := authorize(ctx); err != nil {
+		return nil, err
+	}
+
+	return handler(ctx, req)
+}
+
+func authorize(ctx context.Context) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			papilioapi.Error(fmt.Sprintf("Unknown error occurred while authenticating caller (%+v)", r))
+			err = grpc.Errorf(codes.Internal, "Unknown error occurred while authenticating caller")
+		}
+	}()
+
+	if md, ok := metadata.FromContext(ctx); ok {
+		elem, ok := md["authorization"]
+
+		if ok {
+			authorization := elem[0][len("Basic "):]
+
+			if _, ok := papilioapi.AppConfig.Auth[authorization]; ok {
+				return nil
+			}
+		} else {
+			return grpc.Errorf(codes.Unauthenticated, "Auth Empty")
+		}
+		return grpc.Errorf(codes.Unauthenticated, "Auth Failed")
+
+	}
+
+	return grpc.Errorf(codes.Unauthenticated, "Auth Empty")
+}*/

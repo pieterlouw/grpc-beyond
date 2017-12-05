@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"log"
@@ -9,6 +10,7 @@ import (
 	pb "github.com/pieterlouw/grpc-beyond/proto"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var target = flag.String("l", ":7100", "Specify the port that the server is listening on")
@@ -23,7 +25,12 @@ func main() {
 
 	flag.Parse()
 
-	conn, err := grpc.Dial(*target, grpc.WithInsecure())
+	// create gRPC TLS credentials
+	creds := credentials.NewTLS(&tls.Config{
+		InsecureSkipVerify: true, // using self signed certificate for demo, for more secure connections see https://bbengfort.github.io/programmer/2017/03/03/secure-grpc.html
+	})
+
+	conn, err := grpc.Dial(*target, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("grpc.Dial err: %v", err)
 	}
