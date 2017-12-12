@@ -23,8 +23,8 @@ import (
 var listenPort = flag.String("l", ":7100", "Specify the port that the server will listen on")
 
 type releaseInfo struct {
-	ReleaseDate     string `json:"releaseDate"`
-	ReleaseNotesURL string `json:"releaseNotesURL"`
+	ReleaseDate     string `json:"release_date"`
+	ReleaseNotesURL string `json:"release_notes_url"`
 }
 
 /* goReleaseService implements GoReleaseServiceServer as defined in the generated code:
@@ -48,7 +48,7 @@ func (g *goReleaseService) GetReleaseInfo(ctx context.Context, r *pb.GetReleaseI
 	return &pb.ReleaseInfo{
 		Version:         r.GetVersion(),
 		ReleaseDate:     ri.ReleaseDate,
-		ReleaseNotesURL: ri.ReleaseNotesURL,
+		ReleaseNotesUrl: ri.ReleaseNotesURL,
 	}, nil
 }
 
@@ -59,7 +59,7 @@ func (g *goReleaseService) ListReleases(ctx context.Context, r *pb.ListReleasesR
 		ri := &pb.ReleaseInfo{
 			Version:         k,
 			ReleaseDate:     v.ReleaseDate,
-			ReleaseNotesURL: v.ReleaseNotesURL,
+			ReleaseNotesUrl: v.ReleaseNotesURL,
 		}
 
 		releases = append(releases, ri)

@@ -1,42 +1,42 @@
 {
     "1" : {
-        "releaseDate" : "2012/03/28",
-        "releaseNotesURL" : "https://golang.org/doc/go1.html"
+        "release_date" : "2012/03/28",
+        "release_notes_url" : "https://golang.org/doc/go1.html"
     },
     "1.1" : {
-        "releaseDate" : "2013/05/13",
-        "releaseNotesURL" : "https://golang.org/doc/go1.1"
+        "release_date" : "2013/05/13",
+        "release_notes_url" : "https://golang.org/doc/go1.1"
     },
     "1.2" : {
-        "releaseDate" : "2013/12/01",
-        "releaseNotesURL" : "https://golang.org/doc/go1.2"
+        "release_date" : "2013/12/01",
+        "release_notes_url" : "https://golang.org/doc/go1.2"
     },
     "1.3" : {
-        "releaseDate" : "2014/06/18",
-        "releaseNotesURL" : "https://golang.org/doc/go1.3"
+        "release_date" : "2014/06/18",
+        "release_notes_url" : "https://golang.org/doc/go1.3"
     },
     "1.4" : {
-        "releaseDate" : "2014/12/10",
-        "releaseNotesURL" : "https://golang.org/doc/go1.4"
+        "release_date" : "2014/12/10",
+        "release_notes_url" : "https://golang.org/doc/go1.4"
     },
     "1.5" : {
-        "releaseDate" : "2015/08/19",
-        "releaseNotesURL" : "https://golang.org/doc/go1.5"
+        "release_date" : "2015/08/19",
+        "release_notes_url" : "https://golang.org/doc/go1.5"
     },
     "1.6" : {
-        "releaseDate" : "2016/02/17",
-        "releaseNotesURL" : "https://golang.org/doc/go1.6"
+        "release_date" : "2016/02/17",
+        "release_notes_url" : "https://golang.org/doc/go1.6"
     },
     "1.7" : {
-        "releaseDate" : "2016/08/15",
-        "releaseNotesURL" : "https://golang.org/doc/go1.7"
+        "release_date" : "2016/08/15",
+        "release_notes_url" : "https://golang.org/doc/go1.7"
     },
     "1.8" : {
-        "releaseDate" : "2017/02/16",
-        "releaseNotesURL" : "https://golang.org/doc/go1.8"
+        "release_date" : "2017/02/16",
+        "release_notes_url" : "https://golang.org/doc/go1.8"
     },
     "1.9" : {
-        "releaseDate" : "2017/08/24",
-        "releaseNotesURL" : "https://golang.org/doc/go1.9"
+        "release_date" : "2017/08/24",
+        "release_notes_url" : "https://golang.org/doc/go1.9"
     }
 }
