@@ -28,9 +28,15 @@ func main() {
 
 	flag.Parse()
 
+	// By using TLS tickets we can skip the lenghtly key agreement on any reconnections.
+	// We don't actually re-use connections here, nor is this a long-running services,
+	// but makes a good practice to imitate at low cost.
+	var globalTLSSessionCache = tls.NewLRUClientSessionCache(0) // capacity < 1 → use a default capacity
+
 	// create gRPC TLS credentials
 	creds := credentials.NewTLS(&tls.Config{
 		InsecureSkipVerify: true, // using self signed certificate for demo, for more secure connections see https://bbengfort.github.io/programmer/2017/03/03/secure-grpc.html
+		ClientSessionCache: globalTLSSessionCache,
 	})
 
 	grpcAuth := &basicAuthCreds{
